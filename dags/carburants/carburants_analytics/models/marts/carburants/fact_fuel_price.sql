@@ -15,6 +15,8 @@ current as (
 
 select 
 	cr."CODE_STATION", 
+	cr."LONGITUDE",
+	cr."LATITUDE",
 	cr."ADDRESS", 
 	cr."CITY", 
 	cr."GAZOLE_PRICE", 

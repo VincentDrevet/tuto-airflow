@@ -41,6 +41,8 @@ checks for fact_fuel_price:
       fail:
         when required column missing:
           - CODE_STATION
+          - LONGITUDE
+          - LATITUDE
           - ADDRESS
           - CITY
           - GAZOLE_PRICE
@@ -65,6 +67,8 @@ checks for fact_fuel_price:
           - NOM_REGION
         when wrong column type:
           CODE_STATION: bigint
+          LONGITUDE: double precision
+          LATITUDE: double precision
           ADDRESS: text
           CITY: text
           GAZOLE_PRICE: double precision
@@ -89,25 +93,27 @@ checks for fact_fuel_price:
           NOM_REGION: text
         when wrong column index:
           CODE_STATION: 0
-          ADDRESS: 1
-          CITY: 2
-          GAZOLE_PRICE: 3
-          AVG_GAZOLE_PRICE_OVER_DEP: 4
-          PERCENT_GAZOLE_VAR_PRICE: 5
-          SP95_PRICE: 6
-          AVG_SP95_PRICE_OVER_DEP: 7
-          PERCENT_SP95_VAR_PRICE: 8
-          E85_PRICE: 9
-          AVG_E85_PRICE_OVER_DEP: 10
-          PERCENT_E85_VAR_PRICE: 11
-          GPLC_PRICE: 12
-          AVG_GPLC_PRICE_OVER_DEP: 13
-          PERCENT_GPLC_PRICE_VAR_PRICE: 14
-          E10_PRICE: 15
-          AVG_E10_PRICE_OVER_DEP: 16
-          PERCENT_E10_VAR_PRICE: 17
-          SP98_PRICE: 18
-          AVG_SP98_PRICE_OVER_DEP: 19
-          PERCENT_SP98_VAR_PRICE: 20
-          NOM_DEPARTEMENT: 21
-          NOM_REGION: 22
+          LONGITUDE: 1
+          LATITUDE: 2
+          ADDRESS: 3
+          CITY: 4
+          GAZOLE_PRICE: 5
+          AVG_GAZOLE_PRICE_OVER_DEP: 6
+          PERCENT_GAZOLE_VAR_PRICE: 7
+          SP95_PRICE: 8
+          AVG_SP95_PRICE_OVER_DEP: 9
+          PERCENT_SP95_VAR_PRICE: 10
+          E85_PRICE: 11
+          AVG_E85_PRICE_OVER_DEP: 12
+          PERCENT_E85_VAR_PRICE: 13
+          GPLC_PRICE: 14
+          AVG_GPLC_PRICE_OVER_DEP: 15
+          PERCENT_GPLC_PRICE_VAR_PRICE: 16
+          E10_PRICE: 17
+          AVG_E10_PRICE_OVER_DEP: 18
+          PERCENT_E10_VAR_PRICE: 19
+          SP98_PRICE: 20
+          AVG_SP98_PRICE_OVER_DEP: 21
+          PERCENT_SP98_VAR_PRICE: 22
+          NOM_DEPARTEMENT: 23
+          NOM_REGION: 24
