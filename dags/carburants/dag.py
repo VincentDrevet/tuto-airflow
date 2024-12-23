@@ -3,10 +3,12 @@ import pendulum
 from airflow.providers.docker.operators.docker import DockerOperator
 from docker.types import Mount
 from airflow.models.param import Param 
+from airflow.providers.postgres.operators.postgres import PostgresOperator
+from airflow.operators.empty import EmptyOperator
 
 
 @dag(schedule=None, start_date=pendulum.datetime(2023,12,16, tz="Europe/Paris"), catchup=False, tags=["tutorial"], 
-     params={"database_db": Param("db", type="string"), "database_user": Param("postgres", type="string"),  "database_password": Param("secret", type="string")})
+     params={"database_db": Param("db", type="string"), "database_user": Param("postgres", type="string"),  "database_password": Param("secret", type="string"), "dbt_target": Param("dev", type="string")})
 def carburants_dag():
 
     # 1) Load dim_region and dim_departement table in the datawarehouse
@@ -18,7 +20,7 @@ def carburants_dag():
         mount_tmp_dir=False,
         auto_remove=True,
         mounts=[Mount(type="bind", read_only=False, source="/Users/shiki/Documents/airflow/dags/carburants/carburants_analytics", target="/work")],
-        command="dbt seed",
+        command="dbt seed -t {{ params.dbt_target }}",
         network_mode="airflow_default",
         environment={"DB_USER": "{{ params.database_user }}", "DB_PASSWORD": "{{ params.database_password }}", "DB_DATABASE": "{{ params.database_db }}"}
     )
@@ -35,6 +37,8 @@ def carburants_dag():
         import os
         import pandas
         from sqlalchemy import create_engine
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
 
         engine = create_engine(f'postgresql+psycopg2://{os.environ.get('DB_USER')}:{os.environ.get('DB_PASSWORD')}@datawarehouse/{os.environ.get('DB_DATABASE')}')
 
@@ -43,25 +47,68 @@ def carburants_dag():
         open('raw_data.csv', 'wb').write(r.content)
 
         df = pandas.read_csv('raw_data.csv', delimiter=';')
+        df["DT_TRANSACTION"] = datetime.now(ZoneInfo("Europe/Paris"))
 
         with engine.begin() as connection:
-            df.to_sql("raw_data", con=connection, if_exists="replace")
+            df.to_sql("raw_data", con=connection, if_exists="append")
 
-
-    # 3) ELT fact_fuel_price
-    load_fact_fuel_price = DockerOperator(
-        task_id="load_fact_fuel_price",
+    # 3) DBT staging
+    dbt_staging = DockerOperator(
+        task_id="dbt_staging",
         image="mydbt",
         docker_url="tcp://docker-socket-proxy:2375",
         mount_tmp_dir=False,
         auto_remove=True,
         mounts=[Mount(type="bind", read_only=False, source="/Users/shiki/Documents/airflow/dags/carburants/carburants_analytics", target="/work")],
-        command="dbt run",
+        command="dbt run -t {{ params.dbt_target }} --select staging.carburants",
         network_mode="airflow_default",
         environment={"DB_USER": "{{ params.database_user }}", "DB_PASSWORD": "{{ params.database_password }}", "DB_DATABASE": "{{ params.database_db }}"}
     )
 
-    # 4) Data quality step
+    # 4) DBT intermediate
+    dbt_intermediate = DockerOperator(
+        task_id="dbt_intermediate",
+        image="mydbt",
+        docker_url="tcp://docker-socket-proxy:2375",
+        mount_tmp_dir=False,
+        auto_remove=True,
+        mounts=[Mount(type="bind", read_only=False, source="/Users/shiki/Documents/airflow/dags/carburants/carburants_analytics", target="/work")],
+        command="dbt run -t {{ params.dbt_target }} --select intermediate.carburants",
+        network_mode="airflow_default",
+        environment={"DB_USER": "{{ params.database_user }}", "DB_PASSWORD": "{{ params.database_password }}", "DB_DATABASE": "{{ params.database_db }}"}
+    )
+
+    # 5) get distinct DT_TRANSACTION
+    @task.docker(docker_url="tcp://docker-socket-proxy:2375", image="mypython", mount_tmp_dir=False, auto_remove=True, network_mode="airflow_default",
+                environment={"DB_USER": "{{ params.database_user }}", "DB_PASSWORD": "{{ params.database_password }}", "DB_DATABASE": "{{ params.database_db }}"})
+    def get_dt_transaction_distinct() -> int:
+
+        from sqlalchemy import create_engine, text
+        import os
+
+        engine = create_engine(f'postgresql+psycopg2://{os.environ.get('DB_USER')}:{os.environ.get('DB_PASSWORD')}@datawarehouse/{os.environ.get('DB_DATABASE')}')
+
+        with engine.connect() as connection:
+            
+            result = connection.execute(text('select count(*) from (select distinct("DT_TRANSACTION") from stg_fuel_price)'))
+            count = result.first()
+
+            return count[0]
+
+    # 6) DBT fact
+    dbt_marts = DockerOperator(
+        task_id="dbt_marts",
+        image="mydbt",
+        docker_url="tcp://docker-socket-proxy:2375",
+        mount_tmp_dir=False,
+        auto_remove=True,
+        mounts=[Mount(type="bind", read_only=False, source="/Users/shiki/Documents/airflow/dags/carburants/carburants_analytics", target="/work")],
+        command="dbt run -t {{ params.dbt_target }} --select marts.carburants",
+        network_mode="airflow_default",
+        environment={"DB_USER": "{{ params.database_user }}", "DB_PASSWORD": "{{ params.database_password }}", "DB_DATABASE": "{{ params.database_db }}"}
+    )
+
+    # 7) Data quality step
 
     data_quality = DockerOperator(
         task_id="data_quality",
@@ -75,7 +122,7 @@ def carburants_dag():
         environment={"DB_USER": "{{ params.database_user }}", "DB_PASSWORD": "{{ params.database_password }}", "DB_DATABASE": "{{ params.database_db }}"}
     )
 
-    load_dim >> load_raw_data() >> load_fact_fuel_price >> data_quality
+    load_dim >> load_raw_data() >> dbt_staging >> dbt_intermediate >> dbt_marts >> data_quality
 
 carburants_dag()
 

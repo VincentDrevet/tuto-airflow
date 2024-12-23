@@ -1,5 +1,113 @@
 checks for dim_departement:
-  - row_count > 0
+  - row_count = 101
+  - missing_count("CODE_DEPARTEMENT") = 0
+  - duplicate_count("CODE_DEPARTEMENT") = 0
+  - missing_count("NOM_DEPARTEMENT") = 0
+  - duplicate_count("NOM_DEPARTEMENT") = 0
+  - schema:
+      fail:
+        when required column missing:
+          - CODE_DEPARTEMENT
+          - NOM_DEPARTEMENT
+        when wrong column type:
+          CODE_DEPARTEMENT: text
+          NOM_DEPARTEMENT: text
+        when wrong column index:
+          CODE_DEPARTEMENT: 0
+          NOM_DEPARTEMENT: 1
 
 checks for dim_regions:
+  - row_count = 18
+  - missing_count("CODE_REGION") = 0
+  - duplicate_count("CODE_REGION") = 0
+  - missing_count("NOM_REGION") = 0
+  - duplicate_count("NOM_REGION") = 0
+  - schema:
+      fail:
+        when required column missing:
+          - CODE_REGION
+          - NOM_REGION
+        when wrong column type:
+          CODE_REGION: integer
+          NOM_REGION: text
+        when wrong column index:
+          CODE_REGION: 0
+          NOM_REGION: 1
+
+checks for fact_fuel_price:
   - row_count > 0
+  - missing_count("CODE_STATION") = 0
+  - schema:
+      fail:
+        when required column missing:
+          - CODE_STATION
+          - ADDRESS
+          - CITY
+          - GAZOLE_PRICE
+          - AVG_GAZOLE_PRICE_OVER_DEP
+          - PERCENT_GAZOLE_VAR_PRICE
+          - SP95_PRICE
+          - AVG_SP95_PRICE_OVER_DEP
+          - PERCENT_SP95_VAR_PRICE
+          - E85_PRICE
+          - AVG_E85_PRICE_OVER_DEP
+          - PERCENT_E85_VAR_PRICE
+          - GPLC_PRICE
+          - AVG_GPLC_PRICE_OVER_DEP
+          - PERCENT_GPLC_PRICE_VAR_PRICE
+          - E10_PRICE
+          - AVG_E10_PRICE_OVER_DEP
+          - PERCENT_E10_VAR_PRICE
+          - SP98_PRICE
+          - AVG_SP98_PRICE_OVER_DEP
+          - PERCENT_SP98_VAR_PRICE
+          - NOM_DEPARTEMENT
+          - NOM_REGION
+        when wrong column type:
+          CODE_STATION: bigint
+          ADDRESS: text
+          CITY: text
+          GAZOLE_PRICE: double precision
+          AVG_GAZOLE_PRICE_OVER_DEP: double precision
+          PERCENT_GAZOLE_VAR_PRICE: double precision
+          SP95_PRICE: double precision
+          AVG_SP95_PRICE_OVER_DEP: double precision
+          PERCENT_SP95_VAR_PRICE: double precision
+          E85_PRICE: double precision
+          AVG_E85_PRICE_OVER_DEP: double precision
+          PERCENT_E85_VAR_PRICE: double precision
+          GPLC_PRICE: double precision
+          AVG_GPLC_PRICE_OVER_DEP: double precision
+          PERCENT_GPLC_PRICE_VAR_PRICE: double precision
+          E10_PRICE: double precision
+          AVG_E10_PRICE_OVER_DEP: double precision
+          PERCENT_E10_VAR_PRICE: double precision
+          SP98_PRICE: double precision
+          AVG_SP98_PRICE_OVER_DEP: double precision
+          PERCENT_SP98_VAR_PRICE: double precision
+          NOM_DEPARTEMENT: text
+          NOM_REGION: text
+        when wrong column index:
+          CODE_STATION: 0
+          ADDRESS: 1
+          CITY: 2
+          GAZOLE_PRICE: 3
+          AVG_GAZOLE_PRICE_OVER_DEP: 4
+          PERCENT_GAZOLE_VAR_PRICE: 5
+          SP95_PRICE: 6
+          AVG_SP95_PRICE_OVER_DEP: 7
+          PERCENT_SP95_VAR_PRICE: 8
+          E85_PRICE: 9
+          AVG_E85_PRICE_OVER_DEP: 10
+          PERCENT_E85_VAR_PRICE: 11
+          GPLC_PRICE: 12
+          AVG_GPLC_PRICE_OVER_DEP: 13
+          PERCENT_GPLC_PRICE_VAR_PRICE: 14
+          E10_PRICE: 15
+          AVG_E10_PRICE_OVER_DEP: 16
+          PERCENT_E10_VAR_PRICE: 17
+          SP98_PRICE: 18
+          AVG_SP98_PRICE_OVER_DEP: 19
+          PERCENT_SP98_VAR_PRICE: 20
+          NOM_DEPARTEMENT: 21
+          NOM_REGION: 22
